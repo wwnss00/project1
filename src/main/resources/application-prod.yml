@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/market?serverTimezone=Asia/Seoul
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: your_password  # 실제 비밀번호로 변경
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # 배포 시에는 update 또는 validate
+    database-platform: org.hibernate.dialect.MySQL8Dialect

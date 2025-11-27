@@ -13,3 +13,4 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create  # 개발 시 매번 새로 생성
+

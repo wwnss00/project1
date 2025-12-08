@@ -18,11 +18,11 @@ import java.time.LocalDateTime;
 public abstract class BaseEntity {
 
     @CreatedDate
-    @Column(updatable = false, nullable = false) //수정 불가능
+    @Column(name = "create_at", updatable = false, nullable = false) //수정 불가능
     private LocalDateTime createdAt;
 
     @LastModifiedDate // 엔티티 수정 시 자동으로 시간 갱신
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
 }

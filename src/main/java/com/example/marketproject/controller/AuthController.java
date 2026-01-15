@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +36,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
                 @Valid @RequestBody LoginRequest request,
-                HttpServletResponse response)
+                HttpServletResponse response,
+                @Value("${cookie.secure}") boolean cookieSecure)
     {
             // 인증
             User user = authService.authenticate(request);
@@ -52,7 +54,7 @@ public class AuthController {
             // Refresh Token을 HttpOnly Cookie에 저장
             Cookie cookie = new Cookie("refreshToken", refreshToken);
             cookie.setHttpOnly(true);
-            cookie.setSecure(false);  // HTTPS 환경에서는 true
+            cookie.setSecure(cookieSecure);  // 환경별 설정
             cookie.setPath("/");
             cookie.setMaxAge(2 * 60 * 60);  // 2시간 (초 단위)
             response.addCookie(cookie);
@@ -90,4 +92,6 @@ public class AuthController {
             TokenResponse tokenResponse = new TokenResponse(newAccessToken);
             return ResponseEntity.ok(tokenResponse);
         }
+
+        
     }

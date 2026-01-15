@@ -9,6 +9,7 @@ import com.example.marketproject.dto.response.SignupResponse;
 import com.example.marketproject.dto.response.TokenResponse;
 import com.example.marketproject.security.JwtTokenProvider;
 import com.example.marketproject.service.AuthService;
+import com.example.marketproject.util.CookieUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
@@ -52,16 +54,22 @@ public class AuthController {
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
             // Refresh Token을 HttpOnly Cookie에 저장
-            Cookie cookie = new Cookie("refreshToken", refreshToken);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(cookieSecure);  // 환경별 설정
-            cookie.setPath("/");
-            cookie.setMaxAge(2 * 60 * 60);  // 2시간 (초 단위)
+            Cookie cookie = cookieUtil.createRefreshTokenCookie(refreshToken);
             response.addCookie(cookie);
 
             LoginResponse loginResponse = new LoginResponse(accessToken, refreshToken);
             return ResponseEntity.ok(loginResponse);
         }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        // Cookie 삭제
+        Cookie cookie = cookieUtil.deleteRefreshTokenCookie();
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok().build();
+    }
 
         @PostMapping("/refresh")
         public ResponseEntity<TokenResponse> refresh(

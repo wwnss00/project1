@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CookieUtil {
 
-    @Value("${cookie.secure")
+    @Value("${cookie.secure}")
     private boolean secure;
 
     @Value("${cookie.max-age}")

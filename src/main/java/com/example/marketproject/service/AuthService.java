@@ -5,6 +5,7 @@ import com.example.marketproject.domain.entity.Role;
 import com.example.marketproject.domain.entity.User;
 import com.example.marketproject.dto.request.LoginRequest;
 import com.example.marketproject.dto.request.SignupRequest;
+import com.example.marketproject.exception.AuthenticationFailedException;
 import com.example.marketproject.repository.UserRepository;
 import com.example.marketproject.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -55,11 +56,11 @@ public class AuthService {
     public User authenticate(LoginRequest request) {
         // 사용자 조회
         User user = userRepository.findByLoginId(request.getLoginId())
-                    .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다"));
+                    .orElseThrow(() -> new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다"));
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다");
+                throw new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다");
         }
 
         return user;

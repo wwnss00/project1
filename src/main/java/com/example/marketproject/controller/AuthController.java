@@ -38,8 +38,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
                 @Valid @RequestBody LoginRequest request,
-                HttpServletResponse response,
-                @Value("${cookie.secure}") boolean cookieSecure)
+                HttpServletResponse response)
     {
             // 인증
             User user = authService.authenticate(request);
@@ -57,7 +56,7 @@ public class AuthController {
             Cookie cookie = cookieUtil.createRefreshTokenCookie(refreshToken);
             response.addCookie(cookie);
 
-            LoginResponse loginResponse = new LoginResponse(accessToken, refreshToken);
+            LoginResponse loginResponse = new LoginResponse(accessToken);
             return ResponseEntity.ok(loginResponse);
         }
 

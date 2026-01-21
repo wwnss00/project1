@@ -2,6 +2,7 @@ package com.example.marketproject.exception;
 
 import com.example.marketproject.dto.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -57,6 +58,21 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.badRequest().body(response);  // 400
+    }
+
+    /**
+     * 인증 실패 예외 처리
+     * 용도: 로그인 실패 (이메일/비밀번호 불일치)
+     */
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationFailed(AuthenticationFailedException e) {
+        log.warn("Authentication failed: {}", e.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .message(e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);  // ✅ 401!
     }
 
     /**

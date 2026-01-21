@@ -32,7 +32,7 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private Integer price;
 
-    @Column(length = 100)
+    @Column(length = 100, nullable = false)
     private String location;
 
     @Enumerated(EnumType.STRING)

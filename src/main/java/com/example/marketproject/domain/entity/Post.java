@@ -46,4 +46,30 @@ public class Post extends BaseEntity {
 
     @Column(updatable = false)
     private LocalDateTime deletedAt;
+
+    //수정
+    public void update(String title, String content, Integer price, String location, PostStatus status) {
+        this.title = title;
+        this.content = content;
+        this.price = price;
+        this.location = location;
+        this.status = status;
+    }
+
+    //조회수 증가
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    //작성자 확인
+    public boolean isWriter(Long userId) {
+        return this.user.getId().equals(userId);
+    }
+
+    //소프트 삭제
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+
 }

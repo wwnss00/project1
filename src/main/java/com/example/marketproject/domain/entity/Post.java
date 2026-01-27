@@ -63,6 +63,11 @@ public class Post extends BaseEntity {
         }
     }
 
+    //상태 변경
+    public void changeStatus(PostStatus status) {
+        this.status = status;
+    }
+
     //조회수 증가
     public void increaseViewCount() {
         this.viewCount++;

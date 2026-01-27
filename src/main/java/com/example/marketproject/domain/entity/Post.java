@@ -48,12 +48,19 @@ public class Post extends BaseEntity {
     private LocalDateTime deletedAt;
 
     //수정
-    public void update(String title, String content, Integer price, String location, PostStatus status) {
-        this.title = title;
-        this.content = content;
-        this.price = price;
-        this.location = location;
-        this.status = status;
+    public void update(String title, String content, Integer price, String location) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (content != null) {
+            this.content = content;
+        }
+        if (price != null) {
+            this.price = price;
+        }
+        if (location != null) {
+            this.location = location;
+        }
     }
 
     //조회수 증가

@@ -24,6 +24,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {  // OncePerR
 
     private final JwtTokenProvider jwtTokenProvider;
 
+    /**
+     * JWT 필터를 적용하지 않을 경로 지정
+     * /api/auth/** 경로는 토큰 검증 없이 통과
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/");  // /api/auth/** 제외
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

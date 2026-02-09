@@ -46,6 +46,7 @@ public class AuthController {
             // Access Token 생성
             String accessToken = jwtTokenProvider.createAccessToken(
                     user.getId(),
+                    user.getLoginId(),
                     user.getRole().name()
             );
 
@@ -93,6 +94,7 @@ public class AuthController {
             // 새 Access Token 발급
             String newAccessToken = jwtTokenProvider.createAccessToken(
                     user.getId(),
+                    user.getLoginId(),
                     user.getRole().name()
             );
 

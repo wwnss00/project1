@@ -42,7 +42,7 @@ public class JwtTokenProvider {
      * @param role 사용자 권한
      * @return JWT 토큰 문자열
      */
-    public String createAccessToken(Long userId, String role) {
+    public String createAccessToken(Long userId,String loginId, String role) {
 
         //현재 시간
         Date now = new Date();
@@ -51,6 +51,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))     // JWT의 sub (사용자 ID)
+                .claim("loginId", loginId)             // 커스텀 클레임 (로그인 id)
                 .claim("role", role)                     // 커스텀 클레임 (권한)
                 .setIssuedAt(now)                        // 발급시간
                 .setExpiration(expiration)               // 만료시간
@@ -102,31 +103,26 @@ public class JwtTokenProvider {
         return false;
     }
 
-//    /**
-//     * 토큰에서 사용자 ID 추출
-//     * @param token JWT 토큰
-//     * @return 사용자 ID
-//     */
-//    public Long getUserId(String token) {
-//        Claims claims = parseClaims(token);
-//        return Long.parseLong(claims.getSubject());
-//    }
-//
-//    /**
-//     * 토큰에서 권한 추출
-//     * @param token JWT 토큰
-//     * @return 권한 (예: "USER", "ADMIN")
-//     */
-//    public String getRole(String token) {
-//        Claims claims = parseClaims(token);
-//        return claims.get("role", String.class);
-//    }
+    /**
+     * 토큰에서 사용자 ID 추출
+     * @param token JWT 토큰
+     * @return 사용자 ID
+     */
+    public Long getUserId(String token) {
+        Claims claims = parseClaims(token);
+        return Long.parseLong(claims.getSubject());
+    }
 
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
 
-        Long userId = claims.get("userId", Long.class);
-        String loginId = claims.getSubject();  // ← loginId
+        // subject에서 userId 추출 (String → Long 변환)
+        Long userId = Long.parseLong(claims.getSubject());
+
+        // claim에서 loginId 추출
+        String loginId = claims.get("loginId", String.class);
+
+        // claim에서 role 추출
         String role = claims.get("role", String.class);
 
         CustomUserDetails userDetails = new CustomUserDetails(userId, loginId, role);

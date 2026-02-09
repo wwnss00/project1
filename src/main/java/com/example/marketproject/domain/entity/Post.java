@@ -44,7 +44,7 @@ public class Post extends BaseEntity {
     @Builder.Default
     private Integer viewCount = 0;
 
-    @Column(updatable = false)
+    @Column  
     private LocalDateTime deletedAt;
 
     //수정

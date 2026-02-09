@@ -3,6 +3,7 @@ spring:
     import: optional:application-secret.yml
   profiles:
     active: local  # ??? local(H2) ??
+    include: secret  # JWT 설정 로드
 
   jpa:
     hibernate:

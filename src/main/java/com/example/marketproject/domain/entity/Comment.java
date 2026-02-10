@@ -29,14 +29,34 @@ public class Comment extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "is_secret", nullable = false)
-    @Builder.Default
-    private Boolean isSecret = false;
+//    @Column(name = "is_secret", nullable = false)
+//    @Builder.Default
+//    private Boolean isSecret = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private Comment parent;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "parent_id")
+//    private Comment parent;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 댓글 수정
+    public void update (String content) {
+        this.content = content;
+    }
+
+    // 작성자 확인
+    public boolean isWriter(Long userId) {
+        return this.user.getId().equals(userId);
+    }
+
+    //소프트 삭제
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    //삭제 여부 확인
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }

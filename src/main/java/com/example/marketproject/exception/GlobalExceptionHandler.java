@@ -113,4 +113,13 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); //404
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleCommentNotFound(CommentNotFoundException e) {
+        ErrorResponse response = ErrorResponse.builder()
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response); //404
+    }
+
 }

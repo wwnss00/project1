@@ -39,7 +39,6 @@ public class CommentController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         commentService.deleteComment(commentId, userDetails.getUserId());
-        
         return ResponseEntity.noContent().build();
     }
 

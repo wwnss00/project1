@@ -38,7 +38,16 @@ public class PostController {
     // 2.게시글 목록 조회
     @GetMapping
     public ResponseEntity<List<PostListResponse>> getAllposts() {
+        long startTime = System.currentTimeMillis();  // 시작
+
         List<PostListResponse> posts = postService.getAllPosts();
+
+        long endTime = System.currentTimeMillis();  // 종료
+        long duration = endTime - startTime;
+
+        System.out.println("실행 시간: " + duration + "ms");
+        System.out.println("게시글 수: " + posts.size());
+
         return ResponseEntity.ok(posts);
     }
 

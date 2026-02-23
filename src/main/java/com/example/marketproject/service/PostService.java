@@ -63,7 +63,7 @@ public class PostService {
     //게시글 목록 조회
     @Transactional
     public List<PostListResponse> getAllPosts() {
-        return postRepository.findAll()
+        return postRepository.findAllNotDeletedWithUser()
                 .stream()
                 .filter(post -> !post.isDeleted()) //삭제 안 된 것만
                 .map(PostListResponse::from)

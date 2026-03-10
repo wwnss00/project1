@@ -1,6 +1,7 @@
 package com.example.marketproject.service;
 
 import com.example.marketproject.domain.entity.Post;
+import com.example.marketproject.domain.entity.PostImage;
 import com.example.marketproject.domain.entity.PostStatus;
 import com.example.marketproject.domain.entity.User;
 import com.example.marketproject.dto.request.ChangeStatusRequest;
@@ -11,6 +12,7 @@ import com.example.marketproject.dto.response.PostResponse;
 import com.example.marketproject.exception.PostNotFoundException;
 import com.example.marketproject.exception.UnauthorizedException;
 import com.example.marketproject.exception.UserNotFoundException;
+import com.example.marketproject.repository.PostImageRepository;
 import com.example.marketproject.repository.PostRepository;
 import com.example.marketproject.repository.UserRepository;
 import jakarta.persistence.Table;
@@ -20,7 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,13 +35,19 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostImageRepository postImageRepository;
+    private final FileStorageService fileStorageService;
 
     //게시글 작성
     @Transactional
-    public PostResponse createPost(CreatePostRequest request, Long userId) {
+    public PostResponse createPost(CreatePostRequest request,List<MultipartFile> images,Long userId)
+    throws IOException {
+
+        // 1. User 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
+        // 2. Post 생성
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -46,7 +56,35 @@ public class PostService {
                 .user(user)
                 .build();
 
+        // 3. Post 저장
         Post savedPost = postRepository.save(post);
+
+        // 4. 이미지 처리
+        if (images != null && !images.isEmpty()) {
+            int order = 1;
+            for (MultipartFile image : images) {
+                if (!image.isEmpty()) {
+                    // 파일 저장
+                    String storedFilename = fileStorageService.storeFile(image);
+
+                    // PostImage 생성
+                    PostImage postImage = PostImage.builder()
+                            .post(savedPost)
+                            .originalFilename(image.getOriginalFilename())
+                            .storedFilename(storedFilename)
+                            .filePath("/uploads/images/")
+                            .fileSize(image.getSize())
+                            .imageOrder(order)
+                            .isThumbnail(order == 1)  // 첫 번째만 썸네일
+                            .build();
+
+                    savedPost.addImage(postImage);
+
+                    postImageRepository.save(postImage);
+                    order++;
+                }
+            }
+        }
         return PostResponse.from(savedPost);
     }
 

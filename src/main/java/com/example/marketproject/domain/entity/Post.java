@@ -6,13 +6,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "posts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Post extends BaseEntity {
 
     @Id
@@ -37,12 +37,13 @@ public class Post extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
     private PostStatus status = PostStatus.ON_SALE;
 
     @Column(nullable = false)
-    @Builder.Default
     private Integer viewCount = 0;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images = new ArrayList<>();
 
     @Column  
     private LocalDateTime deletedAt;
@@ -86,6 +87,22 @@ public class Post extends BaseEntity {
     //삭제 여부 확인
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    public void addImage(PostImage image) {
+        images.add(image);
+    }
+
+    @Builder
+    public Post(User user, String title, String content, Integer price, String location) {
+        this.user = user;
+        this.title = title;
+        this.content = content;
+        this.price = price;
+        this.location = location;
+        this.status = PostStatus.ON_SALE;
+        this.viewCount = 0;
+        this.images = new ArrayList<>();
     }
 
 

@@ -18,9 +18,17 @@ public class PostListResponse {
     private PostStatus status;
     private Integer viewCount;
     private String writerNickname;
+    private String thumbnailUrl;
     private LocalDateTime createdAt;
 
     public static PostListResponse from(Post post) {
+
+        String thumbnailUrl = post.getImages().stream()
+                .filter(img -> img.getIsThumbnail())
+                .findFirst()
+                .map(img -> "/api/images/" + img.getStoredFilename())
+                .orElse(null);
+
         return PostListResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())

@@ -17,6 +17,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,11 +31,13 @@ public class PostController {
     // 1.게시글 작성
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
-            @Valid @RequestBody CreatePostRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Valid @ModelAttribute CreatePostRequest request,
+            @RequestParam(required = false) List<MultipartFile> images, // 이미지 파일들
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws Exception {
 
         PostResponse response = postService.createPost(
                 request,
+                images,
                 userDetails.getUserId()
         );
         return ResponseEntity.ok(response);

@@ -45,6 +45,13 @@ public class SecurityConfig {
                         // ADMIN만 접근 가능
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // swagger 경로 허용
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "comments")
@@ -29,13 +31,14 @@ public class Comment extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-//    @Column(name = "is_secret", nullable = false)
-//    @Builder.Default
-//    private Boolean isSecret = false;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "parent_id")
-//    private Comment parent;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+
+    @OneToMany(mappedBy = "parent")
+    @Builder.Default
+    private List<Comment> children = new ArrayList<>();
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -58,5 +61,15 @@ public class Comment extends BaseEntity {
     //삭제 여부 확인
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    // 대댓글 여부 확인
+    public boolean isReply() {
+        return this.parent != null;
+    }
+
+    // 삭제 가능 여부 확인
+    public boolean hasActiveChildren() {
+        return this.children.stream().anyMatch(c -> !c.isDeleted());
     }
 }

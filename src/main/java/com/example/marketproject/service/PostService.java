@@ -17,6 +17,7 @@ import com.example.marketproject.repository.PostRepository;
 import com.example.marketproject.repository.UserRepository;
 import jakarta.persistence.Table;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,7 +37,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostImageRepository postImageRepository;
-    private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService; // 로컬
+    @Autowired(required = false)
+    private S3Service s3Service;
 
     //게시글 작성
     @Transactional
@@ -64,22 +67,25 @@ public class PostService {
             int order = 1;
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    // 파일 저장
-                    String storedFilename = fileStorageService.storeFile(image);
+                    // 로컬/배포 환경 분기
+                    String imageUrl;
+                    if (s3Service != null) {
+                        imageUrl = s3Service.uploadFile(image);
+                    } else {
+                        imageUrl = fileStorageService.storeFile(image);
+                    }
 
-                    // PostImage 생성
                     PostImage postImage = PostImage.builder()
                             .post(savedPost)
                             .originalFilename(image.getOriginalFilename())
-                            .storedFilename(storedFilename)
-                            .filePath("/uploads/images/")
+                            .storedFilename(imageUrl)
+                            .filePath(imageUrl)
                             .fileSize(image.getSize())
                             .imageOrder(order)
-                            .isThumbnail(order == 1)  // 첫 번째만 썸네일
+                            .isThumbnail(order == 1)
                             .build();
 
                     savedPost.addImage(postImage);
-
                     postImageRepository.save(postImage);
                     order++;
                 }

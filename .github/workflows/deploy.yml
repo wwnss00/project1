@@ -34,17 +34,19 @@ jobs:
           docker build -t jkl2085/market-project:latest .
           docker push jkl2085/market-project:latest
 
-      - name: EC2에서 배포
+      - name: EC2에 secret 파일 생성 및 배포
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker pull jkl2085/market-project:latest
-            docker rm -f market-project || true
-            docker run -d -p 8080:8080 \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -v /home/ec2-user/application-prod.yml:/app/application-prod.yml \
-              --name market-project \
-              jkl2085/market-project:latest
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            script: |
+              echo "${{ secrets.APPLICATION_SECRET }}" > /home/ec2-user/application-secret.yml
+              docker pull jkl2085/market-project:latest
+              docker rm -f market-project || true
+              docker run -d -p 8080:8080 \
+                -e SPRING_PROFILES_ACTIVE=prod \
+                -v /home/ec2-user/application-prod.yml:/app/application-prod.yml \
+                -v /home/ec2-user/application-secret.yml:/app/application-secret.yml \
+                --name market-project \
+                jkl2085/market-project:latest

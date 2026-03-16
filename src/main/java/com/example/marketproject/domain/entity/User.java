@@ -18,7 +18,7 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 50 ) //nullable = false
     private String name;
 
     @Column(length = 100, nullable = false, unique = true)
@@ -38,6 +38,9 @@ public class User extends BaseEntity {
 
     @Column(length = 500)
     private String profileImageUrl;
+
+    @Column
+    private String provider; // "google", "kakao" 등 / 일반 로그인이면 null
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

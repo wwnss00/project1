@@ -1,6 +1,8 @@
 package com.example.marketproject.config;
 
 import com.example.marketproject.security.JwtAuthenticationFilter;
+import com.example.marketproject.security.OAuth2SuccessHandler;
+import com.example.marketproject.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2UserService oAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,7 +40,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/signup",
-                                "/api/auth/refresh"
+                                "/api/auth/refresh",
+                                "/login/oauth2/**",            // (구글 리다이렉트 URI)
+                                "/oauth2/**"                   // (OAuth2 시작 URI)
                         ).permitAll()
 
                         // H2 콘솔 접근 허용 (개발 편의)
@@ -59,6 +65,14 @@ public class SecurityConfig {
                 // H2 콘솔 사용을 위한 설정
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
+                )
+
+                // OAuth2 로그인 설정 추가
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService)  // 만든 서비스 연결
+                        )
+                        .successHandler(oAuth2SuccessHandler)    // 로그인 성공 후 처리
                 )
 
                 // JWT 필터 추가

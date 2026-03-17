@@ -36,6 +36,9 @@ public class User extends BaseEntity {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 100)
+    private String address;
+
     @Column(length = 500)
     private String profileImageUrl;
 
@@ -53,6 +56,18 @@ public class User extends BaseEntity {
 
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
+    }
+
+    public void updateProfile(String nickname, String phone, String address) {
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
+        if (address != null) {
+            this.address = address;
+        }
     }
 
 }

@@ -42,7 +42,9 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/refresh",
                                 "/login/oauth2/**",            // (구글 리다이렉트 URI)
-                                "/oauth2/**"                   // (OAuth2 시작 URI)
+                                "/oauth2/**",                // (OAuth2 시작 URI)
+                                "/api/auth/find-loginid/**",
+                                "/api/auth/reset-password/**"
                         ).permitAll()
 
                         // H2 콘솔 접근 허용 (개발 편의)
@@ -84,8 +86,4 @@ public class SecurityConfig {
                 .build();
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }

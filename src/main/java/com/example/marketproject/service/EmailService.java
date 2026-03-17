@@ -3,6 +3,7 @@ package com.example.marketproject.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -17,9 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final StringRedisTemplate redisTemplate;
 
-    // 인증코드 임시 저장 (이메일 → 인증코드)
-    private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
+    // 인증코드 만료시간 5분
+    private static final long CODE_EXPIRE = 60 * 5L;
 
     /**
      * 인증코드 이메일 발송
@@ -28,8 +31,13 @@ public class EmailService {
         // 6자리 인증코드 생성
         String code = generateCode();
 
-        // 인증코드 저장
-        verificationCodes.put(email, code);
+        // Redis에 저장 (key: "emailCode:이메일", TTL: 5분)
+        redisTemplate.opsForValue().set(
+                "emailCode:" + email,
+                code,
+                CODE_EXPIRE,
+                TimeUnit.SECONDS
+        );
 
         // 이메일 발송
         SimpleMailMessage message = new SimpleMailMessage();
@@ -45,12 +53,34 @@ public class EmailService {
      * 인증코드 검증
      */
     public boolean verifyCode(String email, String code) {
-        String savedCode = verificationCodes.get(email);
+        String savedCode = redisTemplate.opsForValue().get("emailCode:" + email);
+
         if (savedCode != null && savedCode.equals(code)) {
-            verificationCodes.remove(email); // 인증 완료 후 삭제
+            // 인증 완료 후 Redis에서 삭제
+            redisTemplate.delete("emailCode:" + email);
             return true;
         }
         return false;
+    }
+
+    // 인증 완료 표시 저장 (10분)
+    public void savePasswordResetVerified(String email) {
+        redisTemplate.opsForValue().set(
+                "passwordReset:" + email,
+                "verified",
+                60 * 10L,
+                TimeUnit.SECONDS
+        );
+    }
+
+    // 인증 완료 여부 확인
+    public boolean isPasswordResetVerified(String email) {
+        return redisTemplate.hasKey("passwordReset:" + email);
+    }
+
+    // 인증 완료 표시 삭제
+    public void deletePasswordResetVerified(String email) {
+        redisTemplate.delete("passwordReset:" + email);
     }
 
     /**

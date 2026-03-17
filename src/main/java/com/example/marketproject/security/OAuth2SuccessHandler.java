@@ -2,6 +2,7 @@ package com.example.marketproject.security;
 
 import com.example.marketproject.domain.entity.User;
 import com.example.marketproject.repository.UserRepository;
+import com.example.marketproject.service.AuthService;
 import com.example.marketproject.util.CookieUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +26,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final CookieUtil cookieUtil;
+    private final AuthService authService;
 
     @Override
     public void onAuthenticationSuccess(
@@ -61,6 +63,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 user.getRole().name()
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        // Redis에 Refresh Token 저장 추가
+        authService.saveRefreshToken(user.getId(), refreshToken);
 
         // 4. Refresh Token 쿠키에 저장
         Cookie cookie = cookieUtil.createRefreshTokenCookie(refreshToken);

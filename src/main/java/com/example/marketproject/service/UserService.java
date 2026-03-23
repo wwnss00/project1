@@ -70,4 +70,9 @@ public class UserService {
         user.updateProfileImage(imageUrl);
         // @Transactional + dirty checking → save() 불필요
     }
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다"));
+    }
 }

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('회원가입')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container" style="max-width: 400px; margin-top: 60px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h4 class="card-title mb-4 text-center">회원가입</h4>
+            <div id="errorMsg" class="alert alert-danger d-none"></div>
+            <div class="mb-3">
+                <label class="form-label">아이디 <span class="text-danger">*</span></label>
+                <input type="text" id="loginId" class="form-control" placeholder="4~50자">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">비밀번호 <span class="text-danger">*</span></label>
+                <input type="password" id="password" class="form-control" placeholder="8자 이상">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">이름 <span class="text-danger">*</span></label>
+                <input type="text" id="name" class="form-control" placeholder="이름 입력">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">닉네임 <span class="text-danger">*</span></label>
+                <input type="text" id="nickname" class="form-control" placeholder="2~50자">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">이메일 <span class="text-danger">*</span></label>
+                <input type="email" id="email" class="form-control" placeholder="example@email.com">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">전화번호</label>
+                <input type="text" id="phone" class="form-control" placeholder="숫자만 입력 (01012345678)">
+            </div>
+            <button class="btn btn-dark w-100" onclick="register()">회원가입</button>
+            <div class="text-center mt-3" style="font-size: 14px;">
+                <a href="/login" class="text-muted">이미 계정이 있으신가요? 로그인</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function register() {
+        const data = {
+            loginId: document.getElementById('loginId').value,
+            password: document.getElementById('password').value,
+            name: document.getElementById('name').value,
+            nickname: document.getElementById('nickname').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value || null
+        };
+
+        fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) return response.json().then(err => { throw err; });
+                alert('회원가입이 완료되었습니다! 로그인해주세요.');
+                window.location.href = '/login';
+            })
+            .catch(err => {
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.textContent = err.message || '회원가입에 실패했습니다. 입력값을 확인해주세요.';
+                errorMsg.classList.remove('d-none');
+            });
+    }
+</script>
+</body>
+</html>

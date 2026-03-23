@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('게시글 목록')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>게시글 목록</h4>
+        <button class="btn btn-dark" onclick="goWrite()">글쓰기</button>
+    </div>
+
+    <div class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input type="text" id="keyword" class="form-control" placeholder="키워드 검색">
+            </div>
+            <div class="col-md-2">
+                <input type="number" id="minPrice" class="form-control" placeholder="최소 가격">
+            </div>
+            <div class="col-md-2">
+                <input type="number" id="maxPrice" class="form-control" placeholder="최대 가격">
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="location" class="form-control" placeholder="장소">
+            </div>
+            <div class="col-md-2">
+                <select id="status" class="form-select">
+                    <option value="">전체</option>
+                    <option value="ON_SALE">판매중</option>
+                    <option value="SOLD_OUT">판매완료</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-dark mt-2" onclick="search()">검색</button>
+    </div>
+
+    <div id="postList" class="row row-cols-1 row-cols-md-3 g-4"></div>
+
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination" id="pagination"></ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+
+    // 소셜로그인 후 토큰 저장
+    const urlParams = new URLSearchParams(location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+        localStorage.setItem('accessToken', urlToken);
+        window.token = urlToken;
+        history.replaceState({}, '', '/posts');
+
+        // nav 다시 렌더링
+        const authLinks = document.getElementById('authLinks');
+        authLinks.innerHTML = `
+        <a class="nav-link text-white d-inline" href="/posts">게시글</a>
+        <a class="nav-link text-white d-inline" href="#" onclick="goChat()">채팅</a>
+        <a class="nav-link text-white d-inline" href="#" onclick="goMypage()">마이페이지</a>
+        <a class="nav-link text-white d-inline" href="#" onclick="logout(event)">로그아웃</a>
+    `;
+    }
+
+    let currentPage = 0;
+    let currentKeyword = '';
+
+    function loadPosts(page = 0, keyword = '') {
+        currentPage = page;
+        currentKeyword = keyword;
+
+        const minPrice = document.getElementById('minPrice')?.value || '';
+        const maxPrice = document.getElementById('maxPrice')?.value || '';
+        const location = document.getElementById('location')?.value || '';
+        const status = document.getElementById('status')?.value || '';
+
+        const hasFilter = keyword || minPrice || maxPrice || location || status;
+
+        let url;
+        if (hasFilter) {
+            url = `/api/posts/search?page=${page}&size=9`;
+            if (keyword) url += `&keyword=${keyword}`;
+            if (minPrice) url += `&minPrice=${minPrice}`;
+            if (maxPrice) url += `&maxPrice=${maxPrice}`;
+            if (location) url += `&location=${location}`;
+            if (status) url += `&status=${status}`;
+        } else {
+            url = `/api/posts?page=${page}&size=9`;
+        }
+
+        fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                renderPosts(data.content);
+                renderPagination(data);
+            });
+    }
+
+    function renderPosts(posts) {
+        const list = document.getElementById('postList');
+        if (posts.length === 0) {
+            list.innerHTML = '<p class="text-muted">게시글이 없습니다.</p>';
+            return;
+        }
+        list.innerHTML = posts.map(post => `
+        <div class="col">
+            <div class="card h-100 shadow-sm" onclick="location.href='/posts/${post.id}'" style="cursor:pointer;">
+                ${post.thumbnailUrl
+            ? `<img src="${post.thumbnailUrl}" class="card-img-top" style="height:180px; object-fit:cover;">`
+            : `<div style="height:180px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#aaa;">이미지 없음</div>`
+        }
+                <div class="card-body">
+                    <h6 class="card-title mb-2">${post.title}</h6>
+                    <p class="mb-1">
+                        <span class="fw-bold">${post.price.toLocaleString()}원</span>
+                        <span class="badge ms-2 ${post.status === 'ON_SALE' ? 'bg-success' : 'bg-secondary'}" style="font-size:11px;">
+                            ${post.status === 'ON_SALE' ? '판매중' : '판매완료'}
+                        </span>
+                    </p>
+                    <p class="text-muted mb-1" style="font-size:12px;">📍 ${post.location || '장소 미정'}</p>
+                    <p class="text-muted mb-0" style="font-size:12px;">👤 ${post.writerNickname} · 조회 ${post.viewCount}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    }
+
+    function goWrite() {
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            location.href = '/login';
+            return;
+        }
+        location.href = '/posts/new';
+    }
+
+    function renderPagination(data) {
+        const pagination = document.getElementById('pagination');
+        let html = '';
+        for (let i = 0; i < data.totalPages; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" onclick="loadPosts(${i}, '${currentKeyword}')">${i + 1}</a>
+            </li>`;
+        }
+        pagination.innerHTML = html;
+    }
+
+    function search() {
+        const keyword = document.getElementById('keyword').value;
+        loadPosts(0, keyword);
+    }
+
+    loadPosts();
+</script>
+</body>
+</html>

@@ -38,15 +38,24 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능
                         .requestMatchers(
+                                //  원래부터 열어둔 경로 (변경 없음)
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/api/auth/refresh",
-                                "/login/oauth2/**",            // (구글 리다이렉트 URI)
-                                "/oauth2/**",                // (OAuth2 시작 URI)
+                                "/login/oauth2/**",
+                                "/oauth2/**",
                                 "/api/auth/find-loginid/**",
                                 "/api/auth/reset-password/**",
                                 "/ws/chat/**",
-                                "/chat-test.html"
+                                "/chat-test.html",
+
+                                // Thymeleaf 시연용으로 추가한 경로
+                                // React 연결 시 아래 경로들은 다시 제거해도 됨
+                                "/login", "/register",
+                                "/posts", "/posts/**",
+                                "/chat/rooms", "/chat/rooms/**",
+                                "/find-id", "/find-password",
+                                "/mypage/**"
                         ).permitAll()
 
                         // H2 콘솔 접근 허용 (개발 편의)
@@ -73,6 +82,7 @@ public class SecurityConfig {
 
                 // OAuth2 로그인 설정 추가
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService)  // 만든 서비스 연결
                         )

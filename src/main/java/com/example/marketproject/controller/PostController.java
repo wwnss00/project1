@@ -115,4 +115,13 @@ public class PostController {
 
         return ResponseEntity.ok(posts);
     }
+
+    @GetMapping("/my")
+    public ResponseEntity<Page<PostListResponse>> getMyPosts(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<PostListResponse> posts = postService.getMyPosts(userDetails.getUserId(), pageable);
+        return ResponseEntity.ok(posts);
+    }
 }

@@ -72,7 +72,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(cookie);
 
         // 5. Access Token을 URL 파라미터로 프론트엔드에 전달
-        String redirectUrl = "http://localhost:8080/swagger-ui.html";  // < 테스트용
+        String redirectUrl = "http://localhost:8080/posts?token=" + accessToken; // < 테스트용
         // String redirectUrl = "http://localhost:3000?accessToken=" + accessToken;
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }

@@ -1,8 +1,10 @@
 package com.example.marketproject.controller;
 
+import com.example.marketproject.domain.entity.User;
 import com.example.marketproject.dto.request.UpdatePasswordRequest;
 import com.example.marketproject.dto.request.UpdateProfileRequest;
 import com.example.marketproject.dto.response.MessageResponse;
+import com.example.marketproject.dto.response.UserResponse;
 import com.example.marketproject.security.CustomUserDetails;
 import com.example.marketproject.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,13 @@ public class UserController {
 
         userService.updatePassword(userDetails.getUserId(), request);
         return ResponseEntity.ok(new MessageResponse("비밀번호가 변경되었습니다"));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMyInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User user = userService.findById(userDetails.getUserId());
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 }
 

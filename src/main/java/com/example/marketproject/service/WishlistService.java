@@ -27,6 +27,7 @@ public class WishlistService {
     private final UserRepository userRepository;
 
     // 찜하기
+    @Transactional
     public void addLike(Long postId, Long userId) {
         // 1. 게시글 조회
         Post post = postRepository.findById(postId)

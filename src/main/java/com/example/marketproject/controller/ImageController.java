@@ -58,6 +58,7 @@ public class ImageController {
      * Content-Type 결정
      */
     private String determineContentType(String filename) {
+        
         String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
 
         return switch (extension) {

@@ -34,6 +34,15 @@ jobs:
           docker build -t jkl2085/market-project:latest .
           docker push jkl2085/market-project:latest
 
+      - name: docker-compose.yml EC2로 전송
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/ec2-user/"
+
       - name: EC2에 secret 파일 생성 및 배포
         uses: appleboy/ssh-action@master
         with:
@@ -42,7 +51,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "${{ secrets.APPLICATION_SECRET }}" > /home/ec2-user/application-secret.yml
+            echo "${{ secrets.APPLICATION_PROD }}" > /home/ec2-user/application-prod.yml
             docker pull jkl2085/market-project:latest
+            docker rm -f market-project || true
             cd /home/ec2-user
-            docker compose down
-            docker compose up -d
+            docker-compose down
+            docker-compose up -d

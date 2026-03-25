@@ -15,6 +15,7 @@ services:
       - redis
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:/app/
     volumes:
       - /home/ec2-user/application-prod.yml:/app/application-prod.yml
       - /home/ec2-user/application-secret.yml:/app/application-secret.yml

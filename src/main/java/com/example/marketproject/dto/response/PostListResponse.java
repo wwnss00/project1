@@ -26,7 +26,7 @@ public class PostListResponse {
         String thumbnailUrl = post.getImages().stream()
                 .filter(img -> img.getIsThumbnail())
                 .findFirst()
-                .map(img -> "/api/images/" + img.getStoredFilename())
+                .map(img -> img.getFilePath())
                 .orElse(null);
 
         return PostListResponse.builder()
@@ -37,6 +37,7 @@ public class PostListResponse {
                 .status(post.getStatus())
                 .viewCount(post.getViewCount())
                 .writerNickname(post.getUser().getNickname())
+                .thumbnailUrl(thumbnailUrl)
                 .createdAt(post.getCreatedAt())
                 .build();
     }

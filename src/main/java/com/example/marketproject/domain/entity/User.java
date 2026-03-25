@@ -18,7 +18,7 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 50 ) //nullable = false
     private String name;
 
     @Column(length = 100, nullable = false, unique = true)
@@ -36,8 +36,14 @@ public class User extends BaseEntity {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 100)
+    private String address;
+
     @Column(length = 500)
     private String profileImageUrl;
+
+    @Column
+    private String provider; // "google", "kakao" 등 / 일반 로그인이면 null
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -46,6 +52,22 @@ public class User extends BaseEntity {
 
     public void updateProfileImage(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void updateProfile(String nickname, String phone, String address) {
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
+        if (address != null) {
+            this.address = address;
+        }
     }
 
 }

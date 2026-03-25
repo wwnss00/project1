@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('마이페이지')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4" style="max-width: 700px;">
+
+    <!-- 프로필 영역 -->
+    <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex align-items-center gap-4">
+            <img id="profileImage" src="" alt="프로필"
+                 style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#eee;"
+                 onerror="this.src='https://via.placeholder.com/80'">
+            <div>
+                <h5 id="nicknameDisplay" class="mb-1"></h5>
+                <p id="emailDisplay" class="text-muted mb-1" style="font-size:13px;"></p>
+                <p id="phoneDisplay" class="text-muted mb-1" style="font-size:13px;"></p>
+                <p id="addressDisplay" class="text-muted mb-0" style="font-size:13px;"></p>
+            </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-dark btn-sm" onclick="location.href='/mypage/edit'">정보 수정</button>
+        </div>
+    </div>
+
+    <!-- 내가 올린 게시글 -->
+    <div class="card shadow-sm p-4 mb-4">
+        <h6 class="mb-3">내가 올린 게시글</h6>
+        <div id="myPosts"></div>
+    </div>
+
+    <!-- 찜한 게시글 -->
+    <div class="card shadow-sm p-4">
+        <h6 class="mb-3">찜한 게시글</h6>
+        <div id="wishlistPosts"></div>
+    </div>
+</div>
+
+<script>
+    fetch('/api/users/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+        .then(res => res.json())
+        .then(user => {
+            document.getElementById('profileImage').src = user.profileImageUrl || 'https://via.placeholder.com/80';
+            document.getElementById('nicknameDisplay').textContent = user.nickname;
+            document.getElementById('emailDisplay').textContent = user.email || '';
+            document.getElementById('phoneDisplay').textContent = user.phone || '';
+            document.getElementById('addressDisplay').textContent = user.address || '';
+        });
+
+    // 내가 올린 게시글
+    fetch('/api/posts/my', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+        .then(res => res.json())
+        .then(data => {
+            const posts = data.content || [];
+            if (posts.length === 0) {
+                document.getElementById('myPosts').innerHTML = '<p class="text-muted">등록한 게시글이 없습니다.</p>';
+                return;
+            }
+            document.getElementById('myPosts').innerHTML = posts.map(post => `
+        <div class="border-bottom py-2" onclick="location.href='/posts/${post.id}'" style="cursor:pointer;">
+            <span>${post.title}</span>
+            <span class="text-muted ms-2" style="font-size:13px;">${post.price.toLocaleString()}원</span>
+        </div>
+    `).join('');
+        });
+
+    // 찜한 게시글
+    fetch('/api/me/wishlist?page=0&size=5', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+        .then(res => res.json())
+        .then(data => {
+            const posts = data.content || [];
+            if (posts.length === 0) {
+                document.getElementById('wishlistPosts').innerHTML = '<p class="text-muted">찜한 게시글이 없습니다.</p>';
+                return;
+            }
+            document.getElementById('wishlistPosts').innerHTML = posts.map(post => `
+    <div class="border-bottom py-2" onclick="location.href='/posts/${post.postId}'" style="cursor:pointer;">
+        <span>${post.title}</span>
+        <span class="text-muted ms-2" style="font-size:13px;">${post.price.toLocaleString()}원</span>
+    </div>
+`).join('');
+        });
+</script>
+</body>
+</html>

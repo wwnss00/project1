@@ -95,6 +95,7 @@ public class PostService {
     }
 
     //게시글 상세 조회
+    @Transactional
     public PostResponse getPost(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
@@ -185,5 +186,10 @@ public class PostService {
         return postRepository.searchPosts(
                 keyword, minPrice, maxPrice, location, status, pageable
         ).map(PostListResponse::from);
+    }
+
+    public Page<PostListResponse> getMyPosts(Long userId, Pageable pageable) {
+        return postRepository.findByUserId(userId, pageable)
+                .map(PostListResponse::from);
     }
 }

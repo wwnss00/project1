@@ -75,4 +75,8 @@ public class WishlistService {
         return wishlistRepository.findByUserIdWithPost(userId, pageable)
                 .map(WishlistResponse::from);
     }
+
+    public boolean isWished(Long postId, Long userId) {
+        return wishlistRepository.existsByUserIdAndPostId(userId, postId);
+    }
 }

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>채팅 테스트</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h2>채팅 테스트</h2>
+
+<div>
+    <input id="token" placeholder="Bearer 토큰 입력" style="width:400px"/>
+    <input id="roomId" placeholder="roomId 입력"/>
+    <button onclick="connect()">연결</button>
+    <button onclick="disconnect()">연결 끊기</button>
+</div>
+
+<div>
+    <input id="message" placeholder="메시지 입력"/>
+    <button onclick="sendMessage()">전송</button>
+</div>
+
+<div id="messages" style="border:1px solid black; height:300px; overflow-y:scroll; padding:10px; margin-top:10px"></div>
+
+<script>
+    let stompClient = null;
+
+    function connect() {
+        const token = document.getElementById('token').value;
+        const roomId = document.getElementById('roomId').value;
+
+        const socket = new SockJS('http://localhost:8080/ws/chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect(
+            { 'Authorization': token },
+            function () {
+                log('✅ 연결 성공!');
+
+                // 채팅방 구독
+                stompClient.subscribe('/sub/chat/room/' + roomId, function (message) {
+                    const body = JSON.parse(message.body);
+                    log('[' + body.senderNickname + '] ' + body.content);
+                });
+            },
+            function (error) {
+                log('❌ 연결 실패: ' + error);
+            }
+        );
+    }
+
+    function disconnect() {
+        if (stompClient) {
+            stompClient.disconnect();
+            log('연결 끊김');
+        }
+    }
+
+    function sendMessage() {
+        const roomId = document.getElementById('roomId').value;
+        const content = document.getElementById('message').value;
+
+        stompClient.send('/pub/chat/message', {}, JSON.stringify({
+            roomId: roomId,
+            content: content
+        }));
+
+        document.getElementById('message').value = '';
+    }
+
+    function log(msg) {
+        const div = document.getElementById('messages');
+        div.innerHTML += '<p>' + msg + '</p>';
+        div.scrollTop = div.scrollHeight;
+    }
+</script>
+</body>
+</html>

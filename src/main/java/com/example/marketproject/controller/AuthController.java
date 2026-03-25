@@ -53,6 +53,9 @@ public class AuthController {
             // Refresh Token 생성
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
+        // Redis에 Refresh Token 저장 추가
+        authService.saveRefreshToken(user.getId(), refreshToken);
+
             // Refresh Token을 HttpOnly Cookie에 저장
             Cookie cookie = cookieUtil.createRefreshTokenCookie(refreshToken);
             response.addCookie(cookie);
@@ -63,7 +66,16 @@ public class AuthController {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+
+        // Redis에서 Refresh Token 삭제
+        if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
+            Long userId = jwtTokenProvider.getUserId(refreshToken);
+            authService.deleteRefreshToken(userId);
+        }
+
         // Cookie 삭제
         Cookie cookie = cookieUtil.deleteRefreshTokenCookie();
         response.addCookie(cookie);
@@ -87,6 +99,12 @@ public class AuthController {
 
             // userId 추출
             Long userId = jwtTokenProvider.getUserId(refreshToken);
+
+            // Redis에 저장된 토큰과 비교
+            String savedToken = authService.getRefreshToken(userId);
+            if (savedToken == null || !savedToken.equals(refreshToken)) {
+                throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다");
+            }
 
             // DB에서 사용자 조회 (최신 정보)
             User user = authService.getUserById(userId);

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('채팅 목록')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4" style="max-width: 600px;">
+    <h4 class="mb-4">채팅 목록</h4>
+    <div id="chatList"></div>
+</div>
+
+<script>
+
+
+    fetch('/api/chat/rooms', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+        .then(res => res.json())
+        .then(rooms => {
+            if (rooms.length === 0) {
+                document.getElementById('chatList').innerHTML = '<p class="text-muted">채팅방이 없습니다.</p>';
+                return;
+            }
+            document.getElementById('chatList').innerHTML = rooms.map(room => `
+            <div class="card mb-2 shadow-sm" onclick="location.href='/chat/rooms/${room.roomId}'" style="cursor:pointer;">
+                <div class="card-body">
+                    <h6 class="card-title">${room.postTitle}</h6>
+                    <p class="card-text text-muted" style="font-size:13px;">
+                        ${room.buyerNickname} · ${room.sellerNickname}
+                    </p>
+                </div>
+            </div>
+        `).join('');
+        });
+</script>
+</body>
+</html>

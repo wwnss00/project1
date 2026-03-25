@@ -15,6 +15,7 @@ spring:
       hibernate:
         format_sql: true
 
+
 file:
   upload-dir: ${user.home}/uploads/images/
 

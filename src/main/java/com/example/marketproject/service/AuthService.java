@@ -9,9 +9,12 @@ import com.example.marketproject.exception.AuthenticationFailedException;
 import com.example.marketproject.repository.UserRepository;
 import com.example.marketproject.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,10 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final StringRedisTemplate redisTemplate;
+
+    // Refresh Token 만료시간 (2주)
+    private static final long REFRESH_TOKEN_EXPIRE = 60 * 60 * 24 * 14L;
 
     @Transactional
     public Long signup(SignupRequest request) {
@@ -65,6 +72,26 @@ public class AuthService {
 
         return user;
         }
+
+    // Refresh Token Redis 저장
+    public void saveRefreshToken(Long userId, String refreshToken) {
+        redisTemplate.opsForValue().set(
+                "refreshToken:" + userId,   // key
+                refreshToken,               // value
+                REFRESH_TOKEN_EXPIRE,       // 만료시간
+                TimeUnit.SECONDS            // 시간 단위
+        );
+    }
+
+    // Refresh Token 조회
+    public String getRefreshToken(Long userId) {
+        return redisTemplate.opsForValue().get("refreshToken:" + userId);
+    }
+
+    // Refresh Token 삭제 (로그아웃)
+    public void deleteRefreshToken(Long userId) {
+        redisTemplate.delete("refreshToken:" + userId);
+    }
 
     public User getUserById(Long userId) {
         return userRepository.findById(userId)

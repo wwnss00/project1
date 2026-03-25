@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('게시글 작성')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4" style="max-width: 700px;">
+    <h4 class="mb-4" id="formTitle">게시글 작성</h4>
+    <div class="mb-3">
+        <label class="form-label">제목</label>
+        <input type="text" id="title" class="form-control">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">내용</label>
+        <textarea id="content" class="form-control" rows="6"></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">가격</label>
+        <div class="input-group">
+            <input type="number" id="price" class="form-control"
+                   placeholder="가격 입력" min="0" step="1000">
+            <span class="input-group-text">원</span>
+        </div>
+        <div class="mt-1">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrice(1000)">+1,000</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrice(5000)">+5,000</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrice(10000)">+10,000</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrice(50000)">+50,000</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPrice(100000)">+100,000</button>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">카테고리</label>
+        <select id="category" class="form-select">
+            <option value="ELECTRONICS">전자기기</option>
+            <option value="CLOTHING">의류</option>
+            <option value="FURNITURE">가구</option>
+            <option value="BOOKS">도서</option>
+            <option value="OTHER">기타</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">거래 장소</label>
+        <input type="text" id="location" class="form-control" placeholder="거래 장소 입력">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">이미지</label>
+        <input type="file" id="images" class="form-control" multiple accept="image/*">
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-dark" onclick="submitPost()">등록</button>
+        <button class="btn btn-secondary" onclick="location.href='/posts'">취소</button>
+    </div>
+</div>
+
+<script>
+    const postId = new URLSearchParams(location.search).get('id');
+
+    if (postId) {
+        document.getElementById('formTitle').textContent = '게시글 수정';
+        fetch(`/api/posts/${postId}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('title').value = data.title;
+                document.getElementById('content').value = data.content;
+                document.getElementById('price').value = data.price;
+                document.getElementById('category').value = data.category;
+            });
+    }
+
+    function submitPost() {
+        if (postId) {
+            // 수정 → JSON으로 보내기
+            const postData = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                price: parseInt(document.getElementById('price').value),
+                category: document.getElementById('category').value,
+                location: document.getElementById('location').value
+            };
+
+            fetch(`/api/posts/${postId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(postData)
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('실패');
+                    window.location.href = `/posts/${postId}`;
+                })
+                .catch(() => alert('게시글 수정에 실패했습니다.'));
+
+        } else {
+            // 작성 → FormData로 보내기
+            const formData = new FormData();
+            formData.append('title', document.getElementById('title').value);
+            formData.append('content', document.getElementById('content').value);
+            formData.append('price', document.getElementById('price').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('location', document.getElementById('location').value);
+
+            const files = document.getElementById('images').files;
+            for (let file of files) {
+                formData.append('images', file);
+            }
+
+            fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('실패');
+                    window.location.href = '/posts';
+                })
+                .catch(() => alert('게시글 등록에 실패했습니다.'));
+        }
+    }
+    function addPrice(amount) {
+        const priceInput = document.getElementById('price');
+        const current = parseInt(priceInput.value) || 0;
+        priceInput.value = current + amount;
+    }
+</script>
+</body>
+</html>

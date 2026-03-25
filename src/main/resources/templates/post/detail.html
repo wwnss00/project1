@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('게시글 상세')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4" style="max-width: 700px;">
+    <div id="postDetail"></div>
+    <div id="commentSection" class="mt-4">
+        <h6>댓글</h6>
+        <div class="input-group mb-3">
+            <input type="text" id="commentInput" class="form-control" placeholder="댓글 입력">
+            <button class="btn btn-dark" onclick="addComment()">등록</button>
+        </div>
+        <div id="commentList"></div>
+    </div>
+</div>
+
+<script>
+    const postId = location.pathname.split('/').pop();
+    let myUserId = null;
+
+    const statusText = {
+        'ON_SALE': '판매중',
+        'RESERVED': '예약중',
+        'SOLD_OUT': '판매완료'
+    };
+
+    if (token) {
+        fetch('/api/users/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                myUserId = data.id;
+                loadPost();
+            });
+    } else {
+        loadPost();
+    }
+
+    function loadPost() {
+        fetch(`/api/posts/${postId}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(post => {
+                const imagesHtml = post.images && post.images.length > 0
+                    ? post.images.map(img => `<img src="${img.imageUrl}" class="img-fluid mb-2" style="max-height:300px; object-fit:cover;">`).join('')
+                    : '';
+
+                const ownerButtons = post.writer.id === myUserId
+                    ? `<button class="btn btn-outline-secondary btn-sm" onclick="location.href='/posts/edit?id=${post.id}'">수정</button>
+       <button class="btn btn-outline-danger btn-sm" onclick="deletePost()">삭제</button>
+       <div class="btn-group btn-group-sm">
+           <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
+               ${statusText[post.status]}
+           </button>
+           <ul class="dropdown-menu">
+               <li><a class="dropdown-item" onclick="changeStatus('ON_SALE')">판매중</a></li>
+               <li><a class="dropdown-item" onclick="changeStatus('RESERVED')">예약중</a></li>
+               <li><a class="dropdown-item" onclick="changeStatus('SOLD_OUT')">판매완료</a></li>
+           </ul>
+       </div>`
+                    : `<button class="btn btn-outline-dark btn-sm" onclick="startChat()">채팅하기</button>
+       <button id="wishBtn" class="btn btn-outline-secondary btn-sm" onclick="toggleWishlist()">찜하기</button>`;
+
+                document.getElementById('postDetail').innerHTML = `
+                <div class="card shadow-sm p-4">
+                    ${imagesHtml}
+                    <h4>${post.title}</h4>
+                    <p class="text-muted" style="font-size:13px;">${post.writer.nickname} · ${post.location || ''}</p>
+                    <hr>
+                    <p>${post.content}</p>
+                    <p class="fw-bold">${post.price.toLocaleString()}원</p>
+                    <div class="d-flex gap-2 mt-3">${ownerButtons}</div>
+                </div>
+            `;
+
+                // 본인 글이 아닐 때만 찜 상태 확인
+                if (post.writer.id !== myUserId && token) {
+                    fetch(`/api/posts/${postId}/wishlist/status`, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            const wishBtn = document.getElementById('wishBtn');
+                            if (wishBtn && data.wished) {
+                                wishBtn.textContent = '찜 취소';
+                                wishBtn.classList.replace('btn-outline-secondary', 'btn-secondary');
+                            }
+                        });
+                }
+            });
+    }
+
+    function deletePost() {
+        if (!confirm('삭제하시겠습니까?')) return;
+        fetch(`/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                window.location.href = '/posts';
+            })
+            .catch(() => alert('삭제에 실패했습니다.'));
+    }
+
+    function addComment() {
+        const content = document.getElementById('commentInput').value;
+        fetch(`/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ content })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                document.getElementById('commentInput').value = '';
+                loadComments();
+            });
+    }
+
+    function loadComments() {
+        fetch(`/api/posts/${postId}/comments`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(comments => {
+                document.getElementById('commentList').innerHTML = comments.map(c => `
+                <div class="border-bottom py-2">
+                    <strong>${c.writer.nickname}</strong>
+                    <span class="ms-2">${c.content}</span>
+                </div>
+            `).join('');
+            });
+    }
+
+    function startChat() {
+        fetch('/api/chat/rooms', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ postId: parseInt(postId) })
+        })
+            .then(res => res.json())
+            .then(data => window.location.href = `/chat/rooms/${data.roomId}`);
+    }
+
+    function toggleWishlist() {
+        const wishBtn = document.getElementById('wishBtn');
+        const isWished = wishBtn.textContent === '찜 취소';
+
+        fetch(`/api/posts/${postId}/wishlist`, {
+            method: isWished ? 'DELETE' : 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                if (isWished) {
+                    wishBtn.textContent = '찜하기';
+                    wishBtn.classList.replace('btn-secondary', 'btn-outline-secondary');
+                } else {
+                    wishBtn.textContent = '찜 취소';
+                    wishBtn.classList.replace('btn-outline-secondary', 'btn-secondary');
+                }
+            })
+            .catch(() => alert('찜하기에 실패했습니다.'));
+    }
+
+    function changeStatus(newStatus) {
+        fetch(`/api/posts/${postId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                loadPost();
+            })
+            .catch(() => alert('상태 변경에 실패했습니다.'));
+    }
+
+    loadComments();
+</script>
+</body>
+</html>

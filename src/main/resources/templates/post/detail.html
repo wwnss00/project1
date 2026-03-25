@@ -41,12 +41,12 @@
     }
 
     function loadPost() {
-        postWriterId = post.writer.id;
         fetch(`/api/posts/${postId}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         })
             .then(res => res.json())
             .then(post => {
+                postWriterId = post.writer.id;
                 const imagesHtml = post.images && post.images.length > 0
                     ? post.images.map(img => `<img src="${img.imageUrl}" class="img-fluid mb-2" style="max-height:300px; object-fit:cover;">`).join('')
                     : '';
@@ -93,6 +93,7 @@
                             }
                         });
                 }
+                loadComments();
             });
     }
 
@@ -194,7 +195,6 @@
             .catch(() => alert('상태 변경에 실패했습니다.'));
     }
 
-    loadComments();
 </script>
 </body>
 </html>

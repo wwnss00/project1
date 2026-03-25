@@ -43,5 +43,6 @@ jobs:
           script: |
             echo "${{ secrets.APPLICATION_SECRET }}" > /home/ec2-user/application-secret.yml
             docker pull jkl2085/market-project:latest
-            docker compose -f /home/ec2-user/docker-compose.yml down
-            docker compose -f /home/ec2-user/docker-compose.yml up -d
+            cd /home/ec2-user
+            docker compose down
+            docker compose up -d

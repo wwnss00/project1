@@ -52,7 +52,7 @@ public class PostResponse {
         public static ImageInfo from(PostImage postImage) {
             return ImageInfo.builder()
                     .id(postImage.getId())
-                    .imageUrl("/api/images/" + postImage.getStoredFilename())
+                    .imageUrl(postImage.getFilePath())  // S3 전체 URL 사용
                     .imageOrder(postImage.getImageOrder())
                     .isThumbnail(postImage.getIsThumbnail())
                     .build();

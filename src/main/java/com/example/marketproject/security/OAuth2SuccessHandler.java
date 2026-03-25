@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -28,6 +29,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final CookieUtil cookieUtil;
     private final AuthService authService;
 
+    @Value("${oauth2.redirect-url}")
+    private String oAuth2RedirectUrl;
+
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
@@ -44,11 +48,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String email;
 
         if (registrationId.equals("naver")) {
-            // 네이버는 response 안에 있음
             Map<String, Object> naverResponse = (Map<String, Object>) attributes.get("response");
             email = (String) naverResponse.get("email");
         } else {
-            // 구글은 바로 꺼내기
             email = (String) attributes.get("email");
         }
 
@@ -64,7 +66,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
-        // Redis에 Refresh Token 저장 추가
+        // Redis에 Refresh Token 저장
         authService.saveRefreshToken(user.getId(), refreshToken);
 
         // 4. Refresh Token 쿠키에 저장
@@ -72,8 +74,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(cookie);
 
         // 5. Access Token을 URL 파라미터로 프론트엔드에 전달
-        String redirectUrl = "http://localhost:8080/posts?token=" + accessToken; // < 테스트용
-        // String redirectUrl = "http://localhost:3000?accessToken=" + accessToken;
+        String redirectUrl = oAuth2RedirectUrl + "?token=" + accessToken;
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }

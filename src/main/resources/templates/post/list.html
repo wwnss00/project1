@@ -107,26 +107,32 @@
             return;
         }
         list.innerHTML = posts.map(post => `
-        <div class="col">
-            <div class="card h-100 shadow-sm" onclick="location.href='/posts/${post.id}'" style="cursor:pointer;">
-                ${post.thumbnailUrl
+    <div class="col">
+        <div class="card h-100 shadow-sm" onclick="location.href='/posts/${post.id}'" style="cursor:pointer;">
+            ${post.thumbnailUrl
             ? `<img src="${post.thumbnailUrl}" class="card-img-top" style="height:180px; object-fit:cover;">`
             : `<div style="height:180px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#aaa;">이미지 없음</div>`
         }
-                <div class="card-body">
-                    <h6 class="card-title mb-2">${post.title}</h6>
-                    <p class="mb-1">
-                        <span class="fw-bold">${post.price.toLocaleString()}원</span>
-                        <span class="badge ms-2 ${post.status === 'ON_SALE' ? 'bg-success' : 'bg-secondary'}" style="font-size:11px;">
-                            ${post.status === 'ON_SALE' ? '판매중' : '판매완료'}
-                        </span>
-                    </p>
-                    <p class="text-muted mb-1" style="font-size:12px;">📍 ${post.location || '장소 미정'}</p>
-                    <p class="text-muted mb-0" style="font-size:12px;">👤 ${post.writerNickname} · 조회 ${post.viewCount}</p>
-                </div>
+            <div class="card-body">
+                <h6 class="card-title mb-2">${post.title}</h6>
+                <p class="mb-1">
+                    <span class="fw-bold">${post.price.toLocaleString()}원</span>
+                    <span class="badge ms-2 ${
+            post.status === 'ON_SALE' ? 'bg-success' :
+                post.status === 'RESERVED' ? 'bg-warning' : 'bg-secondary'
+        }" style="font-size:11px;">
+                        ${
+            post.status === 'ON_SALE' ? '판매중' :
+                post.status === 'RESERVED' ? '예약중' : '판매완료'
+        }
+                    </span>
+                </p>
+                <p class="text-muted mb-1" style="font-size:12px;">📍 ${post.location || '장소 미정'}</p>
+                <p class="text-muted mb-0" style="font-size:12px;">👤 ${post.writerNickname} · 조회 ${post.viewCount}</p>
             </div>
         </div>
-    `).join('');
+    </div>
+`).join('');
     }
 
     function goWrite() {

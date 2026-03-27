@@ -37,7 +37,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             Pageable pageable
     );
 
-    Page<Post> findByUserId(Long userId, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user.id = :userId AND p.deletedAt IS NULL ORDER BY p.createdAt DESC")
+    Page<Post> findByUserIdAndNotDeleted(@Param("userId") Long userId, Pageable pageable);
+
+    // 전체 게시글 수 (삭제 포함)
+    long countByDeletedAtIsNull();
 
 
 }

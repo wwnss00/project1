@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,6 +24,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {  // OncePerRequestFilter: 요청당 한 번만 실행 보장
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate<String, String> redisTemplate;
 
     /**
      * JWT 필터를 적용하지 않을 경로 지정
@@ -47,11 +49,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {  // OncePerR
         // 2. 토큰 유효성 검증
         if (token != null && jwtTokenProvider.validateToken(token)) {
 
-            // 3. 토큰에서 사용자 정보 추출
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+            // 블랙리스트 체크
+            String blacklisted = redisTemplate.opsForValue().get("blacklist:" + token);
+            if (blacklisted == null) {
 
-            // 4. SecurityContext에 인증 정보 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 3. 토큰에서 사용자 정보 추출
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+
+                // 4. SecurityContext에 인증 정보 저장
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
         }
 
         // 5. 다음 필터로 전달

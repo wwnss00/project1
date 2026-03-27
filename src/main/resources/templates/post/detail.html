@@ -44,7 +44,10 @@
         fetch(`/api/posts/${postId}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw new Error(err.message || '존재하지 않는 게시글입니다.') });
+                return res.json();
+            })
             .then(post => {
                 postWriterId = post.writer.id;
                 const imagesHtml = post.images && post.images.length > 0
@@ -53,33 +56,32 @@
 
                 const ownerButtons = post.writer.id === myUserId
                     ? `<button class="btn btn-outline-secondary btn-sm" onclick="location.href='/posts/edit?id=${post.id}'">수정</button>
-       <button class="btn btn-outline-danger btn-sm" onclick="deletePost()">삭제</button>
-       <div class="btn-group btn-group-sm">
-           <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
-               ${statusText[post.status]}
-           </button>
-           <ul class="dropdown-menu">
-               <li><a class="dropdown-item" onclick="changeStatus('ON_SALE')">판매중</a></li>
-               <li><a class="dropdown-item" onclick="changeStatus('RESERVED')">예약중</a></li>
-               <li><a class="dropdown-item" onclick="changeStatus('SOLD_OUT')">판매완료</a></li>
-           </ul>
-       </div>`
+   <button class="btn btn-outline-danger btn-sm" onclick="deletePost()">삭제</button>
+   <div class="btn-group btn-group-sm">
+       <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
+           ${statusText[post.status]}
+       </button>
+       <ul class="dropdown-menu">
+           <li><a class="dropdown-item" onclick="changeStatus('ON_SALE')">판매중</a></li>
+           <li><a class="dropdown-item" onclick="changeStatus('RESERVED')">예약중</a></li>
+           <li><a class="dropdown-item" onclick="changeStatus('SOLD_OUT')">판매완료</a></li>
+       </ul>
+   </div>`
                     : `<button class="btn btn-outline-dark btn-sm" onclick="startChat()">채팅하기</button>
-       <button id="wishBtn" class="btn btn-outline-secondary btn-sm" onclick="toggleWishlist()">찜하기</button>`;
+   <button id="wishBtn" class="btn btn-outline-secondary btn-sm" onclick="toggleWishlist()">찜하기</button>`;
 
                 document.getElementById('postDetail').innerHTML = `
-                <div class="card shadow-sm p-4">
-                    ${imagesHtml}
-                    <h4>${post.title}</h4>
-                    <p class="text-muted" style="font-size:13px;">${post.writer.nickname} · ${post.location || ''}</p>
-                    <hr>
-                    <p>${post.content}</p>
-                    <p class="fw-bold">${post.price.toLocaleString()}원</p>
-                    <div class="d-flex gap-2 mt-3">${ownerButtons}</div>
-                </div>
-            `;
+            <div class="card shadow-sm p-4">
+                ${imagesHtml}
+                <h4>${post.title}</h4>
+                <p class="text-muted" style="font-size:13px;">${post.writer.nickname} · ${post.location || ''}</p>
+                <hr>
+                <p>${post.content}</p>
+                <p class="fw-bold">${post.price.toLocaleString()}원</p>
+                <div class="d-flex gap-2 mt-3">${ownerButtons}</div>
+            </div>
+        `;
 
-                // 본인 글이 아닐 때만 찜 상태 확인
                 if (post.writer.id !== myUserId && token) {
                     fetch(`/api/posts/${postId}/wishlist/status`, {
                         headers: { 'Authorization': 'Bearer ' + token }
@@ -94,6 +96,10 @@
                         });
                 }
                 loadComments();
+            })
+            .catch(err => {
+                alert(err.message);
+                window.location.href = '/posts';
             });
     }
 

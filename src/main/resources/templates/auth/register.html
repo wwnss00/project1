@@ -11,11 +11,20 @@
             <div id="errorMsg" class="alert alert-danger d-none"></div>
             <div class="mb-3">
                 <label class="form-label">아이디 <span class="text-danger">*</span></label>
-                <input type="text" id="loginId" class="form-control" placeholder="4~50자">
+                <div class="input-group">
+                    <input type="text" id="loginId" class="form-control" placeholder="4~50자">
+                    <button class="btn btn-outline-secondary" onclick="checkLoginId()">중복확인</button>
+                </div>
+                <div id="loginIdMsg" class="form-text"></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">비밀번호 <span class="text-danger">*</span></label>
                 <input type="password" id="password" class="form-control" placeholder="8자 이상">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">비밀번호 확인 <span class="text-danger">*</span></label>
+                <input type="password" id="passwordConfirm" class="form-control" placeholder="비밀번호 재입력">
+                <div id="passwordMsg" class="form-text"></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">이름 <span class="text-danger">*</span></label>
@@ -42,10 +51,82 @@
 </div>
 
 <script>
+    let isLoginIdChecked = false;  // 중복확인 여부
+
+    // 아이디 중복확인
+    function checkLoginId() {
+        const loginId = document.getElementById('loginId').value;
+        const loginIdMsg = document.getElementById('loginIdMsg');
+
+        if (!loginId) {
+            loginIdMsg.textContent = '아이디를 입력해주세요.';
+            loginIdMsg.style.color = 'red';
+            return;
+        }
+
+        fetch(`/api/auth/check-loginid?loginId=${loginId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.available) {
+                    loginIdMsg.textContent = '사용 가능한 아이디입니다.';
+                    loginIdMsg.style.color = 'green';
+                    isLoginIdChecked = true;
+                } else {
+                    loginIdMsg.textContent = '이미 사용중인 아이디입니다.';
+                    loginIdMsg.style.color = 'red';
+                    isLoginIdChecked = false;
+                }
+            });
+    }
+
+    // 아이디 변경 시 중복확인 초기화
+    document.getElementById('loginId').addEventListener('input', () => {
+        isLoginIdChecked = false;
+        document.getElementById('loginIdMsg').textContent = '';
+    });
+
+    // 비밀번호 확인
+    document.getElementById('passwordConfirm').addEventListener('input', () => {
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('passwordConfirm').value;
+        const passwordMsg = document.getElementById('passwordMsg');
+
+        if (passwordConfirm === '') {
+            passwordMsg.textContent = '';
+            return;
+        }
+
+        if (password === passwordConfirm) {
+            passwordMsg.textContent = '비밀번호가 일치합니다.';
+            passwordMsg.style.color = 'green';
+        } else {
+            passwordMsg.textContent = '비밀번호가 일치하지 않습니다.';
+            passwordMsg.style.color = 'red';
+        }
+    });
+
     function register() {
+        // 중복확인 여부 체크
+        if (!isLoginIdChecked) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = '아이디 중복확인을 해주세요.';
+            errorMsg.classList.remove('d-none');
+            return;
+        }
+
+        // 비밀번호 일치 여부 체크
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('passwordConfirm').value;
+        if (password !== passwordConfirm) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = '비밀번호가 일치하지 않습니다.';
+            errorMsg.classList.remove('d-none');
+            return;
+        }
+
         const data = {
             loginId: document.getElementById('loginId').value,
-            password: document.getElementById('password').value,
+            password: password,
             name: document.getElementById('name').value,
             nickname: document.getElementById('nickname').value,
             email: document.getElementById('email').value,

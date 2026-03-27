@@ -25,11 +25,11 @@ public class ChatRoom extends BaseEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "buyer_id")
+    @JoinColumn(name = "buyer_id", nullable = false)
     private User buyer;      // 구매자 (채팅 건 사람)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id")
+    @JoinColumn(name = "seller_id", nullable = false)
     private User seller;     // 판매자 (게시글 작성자)
 
     public static ChatRoom create(Post post, User buyer, User seller) {

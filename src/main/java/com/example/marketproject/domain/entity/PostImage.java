@@ -9,7 +9,9 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "post_images")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostImage extends BaseEntity {
+public class
+
+PostImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

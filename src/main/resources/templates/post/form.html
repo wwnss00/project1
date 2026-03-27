@@ -63,16 +63,27 @@
         })
             .then(res => res.json())
             .then(data => {
-                document.getElementById('title').value = data.title;
-                document.getElementById('content').value = data.content;
-                document.getElementById('price').value = data.price;
-                document.getElementById('category').value = data.category;
+                // 작성자 본인인지 확인
+                fetch('/api/users/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                })
+                    .then(res => res.json())
+                    .then(me => {
+                        if (data.writer.id !== me.id) {
+                            alert('수정 권한이 없습니다.');
+                            window.location.href = `/posts/${postId}`;
+                            return;
+                        }
+                        document.getElementById('title').value = data.title;
+                        document.getElementById('content').value = data.content;
+                        document.getElementById('price').value = data.price;
+                        document.getElementById('category').value = data.category;
+                    });
             });
     }
 
     function submitPost() {
         if (postId) {
-            // 수정 → JSON으로 보내기
             const postData = {
                 title: document.getElementById('title').value,
                 content: document.getElementById('content').value,
@@ -90,13 +101,12 @@
                 body: JSON.stringify(postData)
             })
                 .then(res => {
-                    if (!res.ok) throw new Error('실패');
+                    if (!res.ok) return res.json().then(err => { throw new Error(err.message || '게시글 수정에 실패했습니다.') });
                     window.location.href = `/posts/${postId}`;
                 })
-                .catch(() => alert('게시글 수정에 실패했습니다.'));
+                .catch(err => alert(err.message));
 
         } else {
-            // 작성 → FormData로 보내기
             const formData = new FormData();
             formData.append('title', document.getElementById('title').value);
             formData.append('content', document.getElementById('content').value);
@@ -115,12 +125,13 @@
                 body: formData
             })
                 .then(res => {
-                    if (!res.ok) throw new Error('실패');
+                    if (!res.ok) return res.json().then(err => { throw new Error(err.message || '게시글 등록에 실패했습니다.') });
                     window.location.href = '/posts';
                 })
-                .catch(() => alert('게시글 등록에 실패했습니다.'));
+                .catch(err => alert(err.message));
         }
     }
+
     function addPrice(amount) {
         const priceInput = document.getElementById('price');
         const current = parseInt(priceInput.value) || 0;

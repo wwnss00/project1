@@ -7,9 +7,11 @@ import com.example.marketproject.dto.response.MessageResponse;
 import com.example.marketproject.dto.response.UserResponse;
 import com.example.marketproject.security.CustomUserDetails;
 import com.example.marketproject.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,6 +56,25 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userService.findById(userDetails.getUserId());
         return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> withdraw(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {  // request 추가
+
+        String token = resolveToken(request);  // 토큰 추출
+        userService.withdraw(userDetails.getUserId(), token);  // 토큰 전달
+        return ResponseEntity.noContent().build();
+    }
+
+    // 토큰 추출 메서드 추가
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }
 

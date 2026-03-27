@@ -4,28 +4,30 @@ import com.example.marketproject.domain.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
-public class UserResponse {
+public class AdminUserResponse {
     private Long id;
     private String loginId;
     private String nickname;
     private String email;
-    private String phone;
-    private String address;
-    private String profileImageUrl;
     private String role;
+    private boolean deleted;
+    private boolean banned;
+    private LocalDateTime bannedUntil;
 
-    public static UserResponse from(User user) {
-        return UserResponse.builder()
+    public static AdminUserResponse from(User user) {
+        return AdminUserResponse.builder()
                 .id(user.getId())
                 .loginId(user.getLoginId())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
-                .phone(user.getPhone())
-                .address(user.getAddress())
-                .profileImageUrl(user.getProfileImageUrl())
                 .role(user.getRole().name())
+                .deleted(user.isDeleted())
+                .banned(user.isBanned())
+                .bannedUntil(user.getBannedUntil())
                 .build();
     }
 }

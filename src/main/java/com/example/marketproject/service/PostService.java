@@ -189,7 +189,7 @@ public class PostService {
     }
 
     public Page<PostListResponse> getMyPosts(Long userId, Pageable pageable) {
-        return postRepository.findByUserId(userId, pageable)
+        return postRepository.findByUserIdAndNotDeleted(userId, pageable)
                 .map(PostListResponse::from);
     }
 }

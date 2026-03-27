@@ -41,4 +41,7 @@ public class PageController {
 
     @GetMapping("/find-password")
     public String findPassword() { return "auth/find-password"; }
+
+    @GetMapping("/admin")
+    public String admin() { return "admin/admin"; }
 }

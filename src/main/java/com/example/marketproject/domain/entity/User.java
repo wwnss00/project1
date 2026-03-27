@@ -6,6 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -45,6 +47,17 @@ public class User extends BaseEntity {
     @Column
     private String provider; // "google", "kakao" 등 / 일반 로그인이면 null
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isBanned = false;  // 정지 여부
+
+    @Column
+    private LocalDateTime bannedUntil;  // 정지 해제 시간 (null이면 영구정지)
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -69,5 +82,19 @@ public class User extends BaseEntity {
             this.address = address;
         }
     }
+    public void withdraw() {
+        this.isDeleted = true;
+    }
+
+    public void ban(LocalDateTime bannedUntil) {
+        this.isBanned = true;
+        this.bannedUntil = bannedUntil;  // null이면 영구정지
+    }
+
+    public void unban() {
+        this.isBanned = false;
+        this.bannedUntil = null;
+    }
+
 
 }

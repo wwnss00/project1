@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -61,17 +62,33 @@ public class AuthService {
         return savedUser.getId();
     }
     public User authenticate(LoginRequest request) {
-        // 사용자 조회
         User user = userRepository.findByLoginId(request.getLoginId())
-                    .orElseThrow(() -> new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다"));
+                .orElseThrow(() -> new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다"));
 
-        // 비밀번호 검증
+        if (user.isDeleted()) {
+            throw new AuthenticationFailedException("탈퇴한 회원입니다.");
+        }
+
+        // 정지 여부 체크 추가
+        if (user.isBanned()) {
+            if (user.getBannedUntil() == null) {
+                throw new AuthenticationFailedException("영구 정지된 계정입니다.");
+            }
+            if (user.getBannedUntil().isAfter(LocalDateTime.now())) {
+                throw new AuthenticationFailedException(
+                        "활동 정지된 계정입니다. 정지 해제 시간: " + user.getBannedUntil()
+                );
+            }
+            // 정지 기간 만료 시 자동 해제
+            user.unban();
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다");
+            throw new AuthenticationFailedException("아이디 또는 비밀번호가 일치하지 않습니다");
         }
 
         return user;
-        }
+    }
 
     // Refresh Token Redis 저장
     public void saveRefreshToken(Long userId, String refreshToken) {
@@ -97,4 +114,10 @@ public class AuthService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
     }
+
+    public boolean isLoginIdAvailable(String loginId) {
+        return !userRepository.existsByLoginId(loginId);
     }
+
+
+}

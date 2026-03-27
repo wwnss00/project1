@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Slf4j
@@ -57,6 +58,22 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 2. DB에서 유저 조회
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // 탈퇴 체크 추가
+        if (user.isDeleted()) {
+            getRedirectStrategy().sendRedirect(request, response, "/login?error=withdrawn");
+            return;
+        }
+
+        // 정지 체크 추가
+        if (user.isBanned()) {
+            if (user.getBannedUntil() == null || user.getBannedUntil().isAfter(LocalDateTime.now())) {
+                getRedirectStrategy().sendRedirect(request, response, "/login?error=banned");
+                return;
+            }
+            // 정지 기간 만료 시 자동 해제
+            user.unban();
+        }
 
         // 3. JWT 토큰 발급
         String accessToken = jwtTokenProvider.createAccessToken(

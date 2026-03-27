@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity">
+<html xmlns:th="http://www.thymeleaf.org">
+      < xmlns:sec="http://www.thymeleaf.org/extras/springsecurity">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,12 +22,23 @@
     window.token = localStorage.getItem('accessToken');
     const authLinks = document.getElementById('authLinks');
     if (window.token) {
-        authLinks.innerHTML = `
-        <a class="nav-link text-white d-inline" href="/posts">게시글</a>
-        <a class="nav-link text-white d-inline" href="#" onclick="goChat()">채팅</a>
-        <a class="nav-link text-white d-inline" href="#" onclick="goMypage()">마이페이지</a>
-        <a class="nav-link text-white d-inline" href="#" onclick="logout(event)">로그아웃</a>
-    `;
+        fetch('/api/users/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(user => {
+                const adminMenu = user.role === 'ADMIN'
+                    ? `<a class="nav-link text-white d-inline" href="/admin">어드민</a>`
+                    : '';
+
+                authLinks.innerHTML = `
+                <a class="nav-link text-white d-inline" href="/posts">게시글</a>
+                <a class="nav-link text-white d-inline" href="#" onclick="goChat()">채팅</a>
+                <a class="nav-link text-white d-inline" href="#" onclick="goMypage()">마이페이지</a>
+                ${adminMenu}
+                <a class="nav-link text-white d-inline" href="#" onclick="logout(event)">로그아웃</a>
+            `;
+            });
     } else {
         authLinks.innerHTML = `
         <a class="nav-link text-white d-inline" href="/posts">게시글</a>

@@ -6,14 +6,17 @@ import com.example.marketproject.dto.request.UpdatePasswordRequest;
 import com.example.marketproject.dto.request.UpdateProfileRequest;
 import com.example.marketproject.exception.UserNotFoundException;
 import com.example.marketproject.repository.UserRepository;
+import com.example.marketproject.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,8 @@ public class UserService {
     private S3Service s3Service;
     private final FileStorageService fileStorageService; // 로컬
     private final PasswordEncoder passwordEncoder;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public void updateProfile(Long userId, UpdateProfileRequest request) {
@@ -74,5 +79,26 @@ public class UserService {
     public User findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다"));
+    }
+
+    @Transactional
+    public void withdraw(Long userId, String token) {  // token 파라미터 추가
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다."));
+
+        if (user.isDeleted()) {
+            throw new IllegalStateException("이미 탈퇴한 회원입니다.");
+        }
+
+        // 현재 토큰 블랙리스트 저장 (남은 만료시간만큼 TTL 설정)
+        long expiration = jwtTokenProvider.getExpiration(token);
+        redisTemplate.opsForValue().set(
+                "blacklist:" + token,
+                "withdrawn",
+                expiration,
+                TimeUnit.MILLISECONDS
+        );
+
+        user.withdraw();
     }
 }

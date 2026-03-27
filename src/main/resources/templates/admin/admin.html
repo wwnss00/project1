@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('어드민')}"></head>
+<body>
+<nav th:replace="~{layout/base :: nav}"></nav>
+
+<div class="container mt-4">
+    <h4 class="mb-4">어드민 페이지</h4>
+
+    <!-- 통계 -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm p-3">
+                <h6 class="text-muted">전체 유저</h6>
+                <h3 id="totalUsers">-</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm p-3">
+                <h6 class="text-muted">정지된 유저</h6>
+                <h3 id="bannedUsers">-</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm p-3">
+                <h6 class="text-muted">전체 게시글</h6>
+                <h3 id="totalPosts">-</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- 유저 목록 -->
+    <div class="card shadow-sm p-4 mb-4">
+        <h6 class="mb-3">유저 관리</h6>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>아이디</th>
+                <th>닉네임</th>
+                <th>이메일</th>
+                <th>상태</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+        </table>
+    </div>
+
+    <!-- 게시글 목록 -->
+    <div class="card shadow-sm p-4">
+        <h6 class="mb-3">게시글 관리</h6>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>제목</th>
+                <th>작성자</th>
+                <th>상태</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody id="postList"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 어드민 권한 체크
+    if (!token) {
+        alert('로그인이 필요합니다.');
+        location.href = '/login';
+    }
+
+    // 통계 로드
+    function loadStats() {
+        fetch('/api/admin/stats', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) { alert('접근 권한이 없습니다.'); location.href = '/posts'; return; }
+                return res.json();
+            })
+            .then(stats => {
+                if (!stats) return;
+                document.getElementById('totalUsers').textContent = stats.totalUsers;
+                document.getElementById('bannedUsers').textContent = stats.bannedUsers;
+                document.getElementById('totalPosts').textContent = stats.totalPosts;
+            });
+    }
+
+    // 유저 목록 로드
+    function loadUsers() {
+        fetch('/api/admin/users?page=0&size=20', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('userList').innerHTML = data.content.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.loginId}</td>
+                    <td>${user.nickname}</td>
+                    <td>${user.email}</td>
+                    <td>${user.deleted ? '탈퇴' : user.banned ? '정지' : '정상'}</td>
+                    <td class="d-flex gap-1">
+                        <button class="btn btn-outline-warning btn-sm" onclick="banUser(${user.id})">정지</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="unbanUser(${user.id})">정지해제</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="forceWithdraw(${user.id})">강제탈퇴</button>
+                    </td>
+                </tr>
+            `).join('');
+            });
+    }
+
+    // 게시글 목록 로드
+    function loadPosts() {
+        fetch('/api/admin/posts?page=0&size=20', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('postList').innerHTML = data.content.map(post => `
+                <tr>
+                    <td>${post.id}</td>
+                    <td>${post.title}</td>
+                    <td>${post.writerNickname}</td>
+                    <td>${post.deleted ? '삭제됨' : post.saleStatus}</td>
+                    <td>
+                        <button class="btn btn-outline-danger btn-sm" onclick="forceDeletePost(${post.id})">강제삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+            });
+    }
+
+    // 유저 정지
+    function banUser(userId) {
+        const days = prompt('정지 기간을 입력하세요 (일 단위, 영구정지는 0 입력):');
+        if (days === null) return;
+
+        const bannedUntil = days == 0 ? null : new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+        fetch(`/api/admin/users/${userId}/ban`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bannedUntil })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                alert('정지 처리되었습니다.');
+                loadUsers();
+            })
+            .catch(() => alert('정지에 실패했습니다.'));
+    }
+
+    // 유저 정지 해제
+    function unbanUser(userId) {
+        if (!confirm('정지를 해제하시겠습니까?')) return;
+        fetch(`/api/admin/users/${userId}/unban`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                alert('정지가 해제되었습니다.');
+                loadUsers();
+            })
+            .catch(() => alert('정지 해제에 실패했습니다.'));
+    }
+
+    // 강제 탈퇴
+    function forceWithdraw(userId) {
+        if (!confirm('정말 강제 탈퇴시키겠습니까?')) return;
+        fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                alert('강제 탈퇴 처리되었습니다.');
+                loadUsers();
+            })
+            .catch(() => alert('강제 탈퇴에 실패했습니다.'));
+    }
+
+    // 게시글 강제 삭제
+    function forceDeletePost(postId) {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        fetch(`/api/admin/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                alert('삭제 처리되었습니다.');
+                loadPosts();
+            })
+            .catch(() => alert('삭제에 실패했습니다.'));
+    }
+
+    loadStats();
+    loadUsers();
+    loadPosts();
+</script>
+</body>
+</html>

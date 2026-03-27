@@ -48,6 +48,10 @@ public class SecurityConfig {
                                 "/api/auth/reset-password/**",
                                 "/ws/chat/**",
                                 "/chat-test.html",
+                                "/api/posts",
+                                "/api/posts/{id}",
+                                "/api/auth/check-loginid",
+
 
                                 // Thymeleaf 시연용으로 추가한 경로
                                 // React 연결 시 아래 경로들은 다시 제거해도 됨
@@ -55,7 +59,8 @@ public class SecurityConfig {
                                 "/posts", "/posts/**",
                                 "/chat/rooms", "/chat/rooms/**",
                                 "/find-id", "/find-password",
-                                "/mypage/**"
+                                "/mypage/**",
+                                "/admin/**"
                         ).permitAll()
 
                         // H2 콘솔 접근 허용 (개발 편의)

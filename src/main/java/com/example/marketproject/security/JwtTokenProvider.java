@@ -147,4 +147,11 @@ public class JwtTokenProvider {
                 .getBody();  // Payload 부분 반환
     }
 
+    // 토큰 만료시간 추출
+    public long getExpiration(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getExpiration().getTime() - System.currentTimeMillis();
+        // 현재시간 기준 남은 만료시간 (밀리초)
+    }
+
 }

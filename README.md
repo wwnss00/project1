@@ -57,7 +57,12 @@
 - 유저 관리 (강제 탈퇴, 활동 정지)
 - 게시글 관리 (강제 삭제)
 - 통계 (가입자 수, 게시글 수, 정지된 유저 수)
-
+<img width="1343" height="918" alt="로그인 페이지" src="https://github.com/user-attachments/assets/7ae20135-54d5-4e94-9bf8-a2b50d1fabe0" />
+<img width="1495" height="924" alt="게시글 목록" src="https://github.com/user-attachments/assets/2b9a15e3-cb7a-4c0d-bd7c-5237578d46c2" />
+<img width="1395" height="888" alt="게시글 상세" src="https://github.com/user-attachments/assets/298dec5a-4925-4d8d-a635-63ec41601522" />
+<img width="1770" height="918" alt="채팅 화면" src="https://github.com/user-attachments/assets/235d988b-5b38-4d27-b27d-3510dba178f8" />
+<img width="1568" height="768" alt="관리자 페이지" src="https://github.com/user-attachments/assets/114682d1-7b6a-4ef4-b2a7-1109d9e91960" />
+<img width="1656" height="924" alt="스웨거" src="https://github.com/user-attachments/assets/9f9a0403-90e6-4b8c-bd63-2b22f59435a7" />
 ---
 
 ## 트러블슈팅

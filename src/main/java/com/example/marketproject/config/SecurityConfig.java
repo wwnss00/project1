@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/chat-test.html",
                                 "/api/posts",
                                 "/api/posts/{id}",
+                                "/api/posts/{id}/comments",
                                 "/api/auth/check-loginid",
 
 

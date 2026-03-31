@@ -117,6 +117,27 @@
     }
 
     function addComment() {
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+        const content = document.getElementById('commentInput').value;
+        fetch(`/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ content })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('실패');
+                document.getElementById('commentInput').value = '';
+                loadComments();
+            });
+    }
+
+    function loadComments() {
         const headers = {};
         if (token) {
             headers['Authorization'] = 'Bearer ' + token;
@@ -134,24 +155,6 @@
                     <span class="ms-2">${c.content}</span>
                 </div>
             `).join('');
-            });
-    }
-
-    function loadComments() {
-        fetch(`/api/posts/${postId}/comments`, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        })
-            .then(res => res.json())
-            .then(comments => {
-                document.getElementById('commentList').innerHTML = comments.map(c => `
-            <div class="border-bottom py-2">
-                <strong>${c.writer.nickname}</strong>
-                ${c.writer.id === postWriterId
-                    ? '<span class="badge bg-dark ms-1" style="font-size:10px;">작성자</span>'
-                    : ''}
-                <span class="ms-2">${c.content}</span>
-            </div>
-        `).join('');
             });
     }
 
